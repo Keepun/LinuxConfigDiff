@@ -19,6 +19,8 @@ import java.util.concurrent.Executor;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.TokenStream;
 
+import LinuxConfigDiff.antlr.KconfigLexer;
+
 public abstract class KconfigTree extends Parser {
     public static String SRCARCH;
     public static Path ROOTDIR;
@@ -35,7 +37,7 @@ public abstract class KconfigTree extends Parser {
     public void kconfigTreeRoot(KconfigNode node)
     {
         if (node == null) {
-            KconfigResult = new KconfigNode("root", "", "Kconfig", null);
+            KconfigResult = new KconfigNode(Integer.MAX_VALUE, "", "Kconfig", null);
         } else {
             KconfigResult = node;
         }
@@ -43,7 +45,7 @@ public abstract class KconfigTree extends Parser {
     }
 
     protected KconfigNode kcTreeNow;
-    public KconfigNode kconfigTreeIn(String type, String value)
+    public KconfigNode kconfigTreeIn(int type, String value)
     {
         return kcTreeNow = kcTreeNow.addChild(type, value, null);
     }
@@ -55,7 +57,7 @@ public abstract class KconfigTree extends Parser {
     public void kconfigSource(String path)
     {
         if (!Debug) {
-            ThreadPool.execute(new KconfigThread(kcTreeNow.addChild("source", "",
+            ThreadPool.execute(new KconfigThread(kcTreeNow.addChild(KconfigLexer.T_SOURCE, "",
                     path.replace("$SRCARCH", SRCARCH).replace("\"", ""))));
         }
     }

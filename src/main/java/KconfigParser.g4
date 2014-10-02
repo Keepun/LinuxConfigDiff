@@ -54,7 +54,7 @@ stmt_list:
 option_name:
       T_DEPENDS
     | T_PROMPT
-    | T_TYPE
+    | (T_TYPE_tristate | T_TYPE_bool | T_TYPE_else)
     | T_SELECT
     | T_OPTIONAL
     | T_RANGE
@@ -77,19 +77,11 @@ option_error:
 
 /* config/menuconfig entry */
 
-config_entry_start: T_CONFIG name=T_WORD T_EOL
-    {
-        kconfigTreeIn("config", $name.text);
-    }
-;
+config_entry_start: opt=T_CONFIG T_WORD T_EOL {kconfigTreeIn($opt.type, $T_WORD.text);} ;
 
 config_stmt: config_entry_start config_option_list {kconfigTreeOut();} ;
 
-menuconfig_entry_start: T_MENUCONFIG name=T_WORD T_EOL
-    {
-        kconfigTreeIn("menuconfig", $name.text);
-    }
-;
+menuconfig_entry_start: opt=T_MENUCONFIG T_WORD T_EOL {kconfigTreeIn($opt.type, $T_WORD.text);} ;
 
 menuconfig_stmt: menuconfig_entry_start config_option_list {kconfigTreeOut();} ;
 
@@ -105,32 +97,19 @@ config_option_list:
 ;
 
 config_option:
-                 T_TYPE prompt_stmt_opt T_EOL
-             | T_PROMPT prompt if_expr T_EOL
-             | T_DEFAULT expr if_expr T_EOL
-             | T_SELECT T_WORD if_expr T_EOL
-             | T_RANGE symbol symbol if_expr T_EOL ;
-
-symbol_option: T_OPTION .*? T_EOL ;
-//symbol_option: T_OPTION symbol_option_list T_EOL ;
-
-//symbol_option_list:
-//      T_WORD symbol_option_arg symbol_option_list
-//    | /* empty */
-//;
-
-symbol_option_arg:
-      T_EQUAL prompt
-    | /* empty */
+      opt=(T_TYPE_tristate | T_TYPE_bool | T_TYPE_else) (prompt if_expr)? T_EOL
+        {kcTreeNow.addOption($opt.type, $prompt.text);}
+    | opt=T_PROMPT prompt if_expr T_EOL {kcTreeNow.addOption($opt.type, $prompt.text, $if_expr.text);}
+    | opt=T_DEFAULT expr if_expr T_EOL {kcTreeNow.addOption($opt.type, $expr.text, $if_expr.text);}
+    | opt=T_SELECT T_WORD if_expr T_EOL {kcTreeNow.addOption($opt.type, $T_WORD.text, $if_expr.text);}
+    | opt=T_RANGE s1=symbol s2=symbol if_expr T_EOL {kcTreeNow.addOption($opt.type, $s1.text, $s2.text, $if_expr.text);}
 ;
+
+symbol_option: opt=T_OPTION txt=.*? T_EOL  {kcTreeNow.addOption($opt.type, $txt.text);} ;
 
 /* choice entry */
 
-choice: T_CHOICE name=word_opt T_EOL
-    {
-        kconfigTreeIn("choice", $name.text);
-    }
-;
+choice: opt=T_CHOICE word_opt T_EOL {kconfigTreeIn($opt.type, $word_opt.text);} ;
 
 choice_entry: choice choice_option_list ;
 
@@ -149,10 +128,11 @@ choice_option_list:
 ;
 
 choice_option:
-      T_PROMPT prompt if_expr T_EOL
-    | T_TYPE prompt_stmt_opt T_EOL
-    | T_OPTIONAL T_EOL
-    | T_DEFAULT T_WORD if_expr T_EOL
+      opt=T_PROMPT prompt if_expr T_EOL {kcTreeNow.addOption($opt.type, $prompt.text, $if_expr.text);}
+    | opt=(T_TYPE_tristate | T_TYPE_bool | T_TYPE_else) (prompt if_expr)? T_EOL
+        {kcTreeNow.addOption($opt.type, $prompt.text);}
+    | opt=T_OPTIONAL T_EOL {kcTreeNow.addOption($opt.type);}
+    | opt=T_DEFAULT T_WORD if_expr T_EOL {kcTreeNow.addOption($opt.type, $T_WORD.text, $if_expr.text);}
 ;
 
 choice_block:
@@ -166,9 +146,9 @@ choice_block:
 
 /* if entry */
 
-if_entry: T_IF expr nl ;
+if_entry: opt=T_IF expr T_EOL {kconfigTreeIn($opt.type, $expr.text);} ;
 
-if_end: T_ENDIF T_EOL ;
+if_end: T_ENDIF T_EOL {kconfigTreeOut();} ;
 
 if_stmt: if_entry if_block if_end ;
 
@@ -183,20 +163,11 @@ if_block:
 
 /* mainmenu entry */
 
-mainmenu_stmt: T_MAINMENU name=prompt nl
-    {
-        kconfigTreeIn("mainmenu", $name.text);
-        kconfigTreeOut();
-    }
-;
+mainmenu_stmt: opt=T_MAINMENU prompt T_EOL {kcTreeNow.addOption($opt.type, $prompt.text);} ;
 
 /* menu entry */
 
-menu: T_MENU name=prompt T_EOL
-    {
-        kconfigTreeIn("menu", $name.text);
-    }
-;
+menu: opt=T_MENU prompt T_EOL {kconfigTreeIn($opt.type, $prompt.text);} ;
 
 menu_entry: menu visibility_list depends_list ;
 
@@ -213,29 +184,17 @@ menu_block:
     | /* empty */
 ;
 
-source_stmt: T_SOURCE name=prompt T_EOL
-    {
-        kconfigSource($name.text);
-    }
-;
+source_stmt: T_SOURCE prompt T_EOL {kconfigSource($prompt.text);} ;
 
 /* comment entry */
 
-comment: T_COMMENT name=prompt T_EOL
-    {
-        kconfigTreeIn("comment", $name.text);
-    }
-;
+comment: opt=T_COMMENT prompt T_EOL {kconfigTreeIn($opt.type, $prompt.text);} ;
 
 comment_stmt: comment depends_list {kconfigTreeOut();} ;
 
 /* help option */
 
-help: T_HELP txt=T_HELPTEXT
-    {
-        //System.out.println("help = " + $txt.text);
-    }
-;
+help: T_HELP T_HELPTEXT {kcTreeNow.addOption($T_HELP.type, $T_HELPTEXT.text);} ;
 
 /* depends option */
 
@@ -246,7 +205,7 @@ depends_list:
     | /* empty */
 ;
 
-depends: T_DEPENDS T_ON expr T_EOL ;
+depends: T_DEPENDS T_ON expr T_EOL {kcTreeNow.addOption($T_DEPENDS.type, $expr.text);} ;
 
 /* visibility option */
 
@@ -256,14 +215,7 @@ visibility_list:
     | /* empty */
 ;
 
-visible: T_VISIBLE if_expr ;
-
-/* prompt statement */
-
-prompt_stmt_opt:
-      prompt if_expr
-    | /* empty */
-;
+visible: T_VISIBLE if_expr {kcTreeNow.addOption($T_VISIBLE.type, $if_expr.text);} ;
 
 prompt:
       T_WORD

@@ -52,23 +52,27 @@ T_ENDCHOICE : 'endchoice' ;
 T_COMMENT : 'comment' ;
 T_CONFIG : 'config' ;
 T_MENUCONFIG : 'menuconfig' ;
-T_HELP : '-'*? 'help' '-'*? -> mode(HELP) ;
+T_HELP : ('help' | '-'+ 'help' '-'+) -> mode(HELP) ;
 T_IF : 'if' ;
 T_ENDIF : 'endif' ;
 T_DEPENDS : 'depends' ;
 T_OPTIONAL : 'optional' ;
 T_PROMPT : 'prompt' ;
-T_TYPE :
-           'tristate'
-| 'bool'
-| 'boolean'
-| 'int'
-| 'hex'
-| 'string'
+T_TYPE_tristate : 'tristate' ;
+T_TYPE_bool :
+      'bool'
+    | 'boolean'
 ;
-T_DEFAULT : 'default'
-| 'def_tristate'
-          | 'def_bool' ;
+T_TYPE_else :
+      'int'
+    | 'hex'
+    | 'string'
+;
+T_DEFAULT :
+      'default'
+    | 'def_tristate'
+    | 'def_bool'
+;
 T_SELECT : 'select' ;
 T_RANGE : 'range' ;
 T_VISIBLE : 'visible' ;

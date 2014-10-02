@@ -20,30 +20,36 @@ public class KconfigNode
 {
     public KconfigNode parent;
     public String path;
-    public String type;
+    public int type;
     public String value;
-    public HashMap<String, String> options;
+    public HashMap<Integer, String> options;
     public LinkedList<KconfigNode> children;
 
-    KconfigNode(String type, String value, String path, KconfigNode parent) {
+    KconfigNode(int type, String value, String path, KconfigNode parent) {
         this.parent = parent;
         this.path = path;
         this.type = type;
         this.value = value;
-        options = new HashMap<String, String>();
+        options = new HashMap<Integer, String>();
         children = new LinkedList<KconfigNode>();
     }
 
-    public void addOption(String key, String value)
+    public void addOption(int type, String... value)
     {
-        if (options.containsKey(key)) {
-            options.put(key, options.get(key) + " " + value);
+        StringBuilder val = new StringBuilder();
+        for (String vl : value) {
+            if (vl != null) {
+                val.append(vl + " ");
+            }
+        }
+        if (options.containsKey(type)) {
+            options.put(type, options.get(type) + " " + val.toString().trim());
         } else {
-            options.put(key, value);
+            options.put(type, val.toString().trim());
         }
     }
 
-    public KconfigNode addChild(String type, String value, String path)
+    public KconfigNode addChild(int type, String value, String path)
     {
         KconfigNode child = new KconfigNode(type, value, path == null ? this.path : path, this);
         children.add(child);
