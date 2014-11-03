@@ -13,6 +13,8 @@
  */
 package LinuxConfigDiff;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -20,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -78,6 +81,11 @@ public class LinuxConfigDiff
             return;
         }
 
+        BufferedReader fconfig = null;
+        if (cmd.hasOption("config")) {
+            fconfig = Files.newBufferedReader(Paths.get(cmd.getOptionValue("config")));
+        }
+
         KconfigTree.SRCARCH = cmd.getOptionValue("arch", System.getProperty("os.arch", "x86"));
         if (KconfigTree.SRCARCH.equals("amd64")) {
             KconfigTree.SRCARCH = "x86_64";
@@ -119,6 +127,17 @@ public class LinuxConfigDiff
         KconfigParser parser = new KconfigParser(null);
         parser.kconfigTreeRoot(null);
         parser.kconfigSource("Kconfig");
+
+        HashMap<String, String> config = new HashMap<String, String>();
+        if (fconfig != null) {
+            String cline;
+            while ((cline = fconfig.readLine()) != null) {
+                String kv[] = cline.split("=");
+                if (kv.length == 2) {
+                    config.put(kv[0].trim(), kv[1].trim());
+                }
+            }
+        }
 
         threads.join(100);
 
