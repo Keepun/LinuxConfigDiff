@@ -42,6 +42,8 @@ import LinuxConfigDiff.antlr.KconfigParser;
 /** @author Keepun */
 public class LinuxConfigDiff
 {
+    public static final String VERSION = "0.5beta";
+
     @SuppressWarnings("static-access")
     public static void main(String[] args) throws Exception
     {
@@ -64,7 +66,13 @@ public class LinuxConfigDiff
         cmdopts.addOption(OptionBuilder.withLongOpt("threads").withArgName("number").hasArg()
                                        .withDescription("Threads for parser. Default=CPUs=" +
                                                         Runtime.getRuntime().availableProcessors()).create("t"));
+        cmdopts.addOption(null, "version", false, "Version " + VERSION);
         CommandLine cmd = cmdparser.parse(cmdopts, args);
+
+        if (cmd.hasOption("version")) {
+            System.out.println("LinuxConfigDiff version " + VERSION);
+            return;
+        }
 
         if (args.length == 0 || cmd.hasOption("help")) {
             PrintWriter console = new PrintWriter(System.out);
@@ -113,6 +121,9 @@ public class LinuxConfigDiff
         }
 
         int cpu = Runtime.getRuntime().availableProcessors();
+        if (cmd.hasOption("threads")) {
+            cpu = Integer.parseInt(cmd.getOptionValue("threads"));
+        }
         LinkedBlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>();
         NormalThreadPool threads = new NormalThreadPool(cpu, cpu, 1, TimeUnit.MINUTES, workQueue,
             new RejectedExecutionHandler() {
@@ -141,6 +152,10 @@ public class LinuxConfigDiff
 
         threads.join(100);
 
-        System.out.println("FINISH");
+        Output out = new Output();
+        if (cmd.hasOption("depth")) {
+            out.MaxDepth = Integer.parseInt(cmd.getOptionValue("depth"));
+        }
+        out.print(parser.KconfigResult);
     }
 }

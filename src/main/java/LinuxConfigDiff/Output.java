@@ -23,7 +23,7 @@ public class Output
     public boolean Html;
     public boolean Color;
     public boolean Description;
-    public int MaxDeep = Integer.MAX_VALUE;
+    public int MaxDepth = Integer.MAX_VALUE;
 
     public Output()
     {
@@ -40,13 +40,13 @@ public class Output
     {
         print(tree, 0);
     }
-    protected void print(KconfigNode node, int deep)
+    protected void print(KconfigNode node, int depth)
     {
-        if (deep > MaxDeep) {
+        if (depth > MaxDepth) {
             return;
         }
         StringBuilder space = new StringBuilder();
-        for (int i = 0; i < deep; i++) {
+        for (int i = 0; i < depth; i++) {
             space.append("  ");
         }
         //StringBuilder line[] = new StringBuilder[3];
@@ -78,7 +78,7 @@ public class Output
                 break;
             }
         }
-        int _deep = deep + 1;
+        int _deep = depth + 1;
         switch (node.type) {
         case KconfigLexer.T_SOURCE:
             line[0].append("source");
