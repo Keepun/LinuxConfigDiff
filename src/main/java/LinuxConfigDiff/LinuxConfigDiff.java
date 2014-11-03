@@ -14,21 +14,74 @@
 package LinuxConfigDiff;
 
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionBuilder;
+import org.apache.commons.cli.OptionGroup;
+import org.apache.commons.cli.Options;
+
 import LinuxConfigDiff.antlr.KconfigParser;
 
-public class Main
+/** @author Keepun */
+public class LinuxConfigDiff
 {
+    @SuppressWarnings("static-access")
     public static void main(String[] args) throws Exception
     {
-        KconfigTree.SRCARCH = "x86";
+        GnuParser cmdparser = new GnuParser();
+        Options cmdopts = new Options();
+        for (String fld : Arrays.asList("shortOpts", "longOpts", "optionGroups")) {
+            // hack for printOptions
+            java.lang.reflect.Field fieldopt = cmdopts.getClass().getDeclaredField(fld);
+            fieldopt.setAccessible(true);
+            fieldopt.set(cmdopts, new LinkedHashMap<>());
+        }
+        cmdopts.addOption("h", "help", false, "Help");
+        cmdopts.addOption(OptionBuilder.withLongOpt("config").withArgName("file").hasArg()
+                                       .withDescription("Path to .config").create("c"));
+        cmdopts.addOption(OptionBuilder.withLongOpt("arch").withArgName("type").hasArg()
+                                       .withDescription("Folder name in linux/arch/").create("a"));
+        cmdopts.addOption(null, "html", false, "Output in HTML");
+        cmdopts.addOption(OptionBuilder.withLongOpt("depth").withArgName("number").hasArg()
+                                       .withDescription("Maximum depth in the output").create("d"));
+        cmdopts.addOption(OptionBuilder.withLongOpt("threads").withArgName("number").hasArg()
+                                       .withDescription("Threads for parser. Default=CPUs=" +
+                                                        Runtime.getRuntime().availableProcessors()).create("t"));
+        CommandLine cmd = cmdparser.parse(cmdopts, args);
+
+        if (args.length == 0 || cmd.hasOption("help")) {
+            PrintWriter console = new PrintWriter(System.out);
+            HelpFormatter cmdhelp = new HelpFormatter();
+            cmdhelp.setOptionComparator(new Comparator<Option>() {
+                @Override
+                public int compare(Option o1, Option o2) {
+                    return 0;
+                }
+            });
+            console.println("LinuxConfigDiff [options] [Linux Sources folder] [Linux Sources folder]");
+            cmdhelp.printOptions(console, 80, cmdopts, 3, 2);
+            console.flush();
+            return;
+        }
+
+        KconfigTree.SRCARCH = cmd.getOptionValue("arch", System.getProperty("os.arch", "x86"));
+        if (KconfigTree.SRCARCH.equals("amd64")) {
+            KconfigTree.SRCARCH = "x86_64";
+        }
         KconfigTree.ROOTDIR = Paths.get("d:\\EclipseJava\\LinuxConfigDiff\\trash\\Kconfig").getParent();
         System.out.println(KconfigTree.ROOTDIR);
 
