@@ -14,10 +14,10 @@
 package LinuxConfigDiff;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
@@ -34,7 +34,6 @@ import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
-import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
 import LinuxConfigDiff.antlr.KconfigParser;
@@ -89,6 +88,20 @@ public class LinuxConfigDiff
             return;
         }
 
+        String paths[] = cmd.getArgs();
+        if (paths.length == 0) {
+            System.err.println("ERROR: No path to the Linux Sources.");
+            return;
+        }
+        KconfigTree.ROOTDIR = new Path[2];
+        for (int x = 0; x < 2 && x < paths.length; x++) {
+            KconfigTree.ROOTDIR[x] = Paths.get(paths[x]);
+            if (!Files.isDirectory(KconfigTree.ROOTDIR[x])) {
+                System.err.println("ERROR: " + KconfigTree.ROOTDIR[x] + " not found.");
+                return;
+            }
+        }
+
         BufferedReader fconfig = null;
         if (cmd.hasOption("config")) {
             fconfig = Files.newBufferedReader(Paths.get(cmd.getOptionValue("config")));
@@ -98,8 +111,6 @@ public class LinuxConfigDiff
         if (KconfigTree.SRCARCH.equals("amd64")) {
             KconfigTree.SRCARCH = "x86_64";
         }
-        KconfigTree.ROOTDIR = Paths.get("d:\\EclipseJava\\LinuxConfigDiff\\trash\\Kconfig").getParent();
-        System.out.println(KconfigTree.ROOTDIR);
 
         //boolean debug = true; /// cmdline
         boolean debug = false;
@@ -135,9 +146,12 @@ public class LinuxConfigDiff
             });
         KconfigTree.ThreadPool = threads;
 
-        KconfigParser parser = new KconfigParser(null);
-        parser.kconfigTreeRoot(null);
-        parser.kconfigSource("Kconfig");
+        KconfigParser parser[] = new KconfigParser[2];
+        for (int x = 0; x < KconfigTree.ROOTDIR.length && x < paths.length; x++) {
+            parser[x] = new KconfigParser(null);
+            parser[x].kconfigTreeRoot(x);
+            parser[x].kconfigSource("Kconfig");
+        }
 
         HashMap<String, String> config = new HashMap<String, String>();
         if (fconfig != null) {

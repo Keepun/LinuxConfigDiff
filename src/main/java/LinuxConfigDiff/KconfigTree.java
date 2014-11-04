@@ -23,7 +23,7 @@ import LinuxConfigDiff.antlr.KconfigLexer;
 
 public abstract class KconfigTree extends Parser {
     public static String SRCARCH;
-    public static Path ROOTDIR;
+    public static Path ROOTDIR[];
     public KconfigNode KconfigResult;
 
     public static Executor ThreadPool;
@@ -34,13 +34,14 @@ public abstract class KconfigTree extends Parser {
         super(input);
     }
 
+    public void kconfigTreeRoot(int rootpath)
+    {
+        KconfigResult = new KconfigNode(rootpath);
+        kcTreeNow = KconfigResult;
+    }
     public void kconfigTreeRoot(KconfigNode node)
     {
-        if (node == null) {
-            KconfigResult = new KconfigNode(Integer.MAX_VALUE, "", "Kconfig", null);
-        } else {
-            KconfigResult = node;
-        }
+        KconfigResult = node;
         kcTreeNow = KconfigResult;
     }
 

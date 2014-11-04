@@ -35,7 +35,7 @@ public class KconfigThread implements Runnable
 
     public String getPath()
     {
-        return Paths.get(KconfigTree.ROOTDIR.toString(), node.path).toString();
+        return Paths.get(KconfigTree.ROOTDIR[node.rootpath].toString(), node.path).toString();
     }
 
     public void init(String path) throws IOException

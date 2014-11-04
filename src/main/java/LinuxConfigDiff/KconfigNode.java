@@ -19,6 +19,7 @@ import java.util.LinkedList;
 public class KconfigNode
 {
     public KconfigNode parent;
+    public int rootpath;
     public String path;
     public int type;
     public String value;
@@ -27,11 +28,20 @@ public class KconfigNode
 
     KconfigNode(int type, String value, String path, KconfigNode parent) {
         this.parent = parent;
+        if (parent != null) {
+            this.rootpath = parent.rootpath;
+        }
         this.path = path;
         this.type = type;
         this.value = value;
         options = new HashMap<Integer, String>();
         children = new LinkedList<KconfigNode>();
+    }
+
+    KconfigNode(int rootpath)
+    {
+        this(Integer.MAX_VALUE, "", "Kconfig", null);
+        this.rootpath = rootpath;
     }
 
     public void addOption(int type, String... value)
