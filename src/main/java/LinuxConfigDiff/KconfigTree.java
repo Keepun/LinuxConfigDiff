@@ -26,8 +26,8 @@ public abstract class KconfigTree extends Parser {
     public static Path ROOTDIR[];
     public KconfigNode KconfigResult;
 
-    public static Executor ThreadPool;
-    public static boolean Debug;
+    public static Executor threadPool;
+    public static boolean debug;
 
     public KconfigTree(TokenStream input)
     {
@@ -57,8 +57,8 @@ public abstract class KconfigTree extends Parser {
 
     public void kconfigSource(String path)
     {
-        if (!Debug) {
-            ThreadPool.execute(new KconfigThread(kcTreeNow.addChild(KconfigLexer.T_SOURCE, "",
+        if (!debug) {
+            threadPool.execute(new KconfigThread(kcTreeNow.addChild(KconfigLexer.T_SOURCE, "",
                     path.replace("$SRCARCH", SRCARCH).replace("\"", ""))));
         }
     }

@@ -25,8 +25,8 @@ import LinuxConfigDiff.antlr.KconfigParser;
 public class KconfigThread implements Runnable
 {
     private final KconfigNode node;
-    public KconfigLexer Lexer;
-    public KconfigParser Parser;
+    public KconfigLexer lexer;
+    public KconfigParser parser;
 
     public KconfigThread(KconfigNode node)
     {
@@ -41,13 +41,13 @@ public class KconfigThread implements Runnable
     public void init(String path) throws IOException
     {
         ANTLRFileStream kconfigfile = new ANTLRFileStream(path);
-        Lexer = new KconfigLexer(kconfigfile);
-        Lexer.setTokenFactory(new KconfigLexerTokenFactory());
-        CommonTokenStream comts = new CommonTokenStream(Lexer);
-        Parser = new KconfigParser(comts);
-        Parser.kconfigTreeRoot(node);
-        Parser.setBuildParseTree(false);
-        Parser.setTrace(false);
+        lexer = new KconfigLexer(kconfigfile);
+        lexer.setTokenFactory(new KconfigLexerTokenFactory());
+        CommonTokenStream comts = new CommonTokenStream(lexer);
+        parser = new KconfigParser(comts);
+        parser.kconfigTreeRoot(node);
+        parser.setBuildParseTree(false);
+        parser.setTrace(false);
     }
 
     @Override
@@ -56,11 +56,11 @@ public class KconfigThread implements Runnable
         KconfigErrorListener errors = new KconfigErrorListener();
         try {
             init(getPath());
-            Lexer.removeErrorListeners();
-            Lexer.addErrorListener(errors);
-            Parser.removeErrorListeners();
-            Parser.addErrorListener(errors);
-            Parser.input();
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(errors);
+            parser.removeErrorListeners();
+            parser.addErrorListener(errors);
+            parser.input();
         } catch (IOException e) {
             errors.errors.add(e.getMessage());
         }

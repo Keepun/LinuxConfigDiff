@@ -120,11 +120,11 @@ public class LinuxConfigDiff
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE));
             PrintStream sout = System.out;
             System.setOut(flog);
-            KconfigTree.Debug = true;
+            KconfigTree.debug = true;
             KconfigThread kconfig = new KconfigThread(null);
             kconfig.init(path);
-            kconfig.Parser.setTrace(true);
-            Tracer.printParserTree(kconfig.Parser, kconfig.Parser.getClass(), "input", null, flog, 5);
+            kconfig.parser.setTrace(true);
+            Tracer.printParserTree(kconfig.parser, kconfig.parser.getClass(), "input", null, flog, 5);
             flog.close();
             System.setOut(sout);
             System.out.println("FINISH");
@@ -144,7 +144,7 @@ public class LinuxConfigDiff
                     System.out.println("Rejected = " + ((KconfigThread)r).getPath());
                 }
             });
-        KconfigTree.ThreadPool = threads;
+        KconfigTree.threadPool = threads;
 
         KconfigParser parser[] = new KconfigParser[2];
         for (int x = 0; x < KconfigTree.ROOTDIR.length && x < paths.length; x++) {
